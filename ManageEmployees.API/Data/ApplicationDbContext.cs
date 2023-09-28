@@ -25,7 +25,6 @@ namespace ManageEmployees.API.Data
             }
 
             modelBuilder.Entity<Employee>().ToTable("Employee");
-            modelBuilder.Entity<Employee>().Property(s => s.DepartmentId).IsRequired();
             modelBuilder.Entity<Employee>().Property(s => s.BirthDate).HasDefaultValue(DateTime.Now);
             modelBuilder.Entity<Employee>().Property(s => s.JobPosition).HasDefaultValue(JobPosition.Junior);
             modelBuilder.Entity<Employee>()
@@ -38,7 +37,6 @@ namespace ManageEmployees.API.Data
             modelBuilder.Entity<Department>().HasMany(s => s.Employees);
 
             modelBuilder.Entity<Contract>().ToTable("Contract");
-            modelBuilder.Entity<Contract>().Property(s => s.EmployeeId).IsRequired();
             modelBuilder.Entity<Contract>().Property(s => s.StartDate).HasDefaultValue(DateTime.Now).IsRequired();
             modelBuilder.Entity<Contract>().Property(s => s.EndDate).HasDefaultValue(DateTime.Now).IsRequired();
             modelBuilder.Entity<Contract>().HasOne(s => s.Employee);

@@ -1,110 +1,163 @@
-﻿using ManageEmployees.API.Data.Interface;
-using ManageEmployees.API.Models.Enums;
+﻿using ManageEmployees.API.Data.Consts;
+using ManageEmployees.API.Data.Interface;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
-using System;
+using Microsoft.EntityFrameworkCore.Query;
 using System.Linq.Expressions;
 
 namespace ManageEmployees.API.Data.Base
 {
     public class EntityBaseRepository<T> : IEntityBaseRepository<T> where T : class 
     {
-        private readonly ApplicationDbContext _context;
-
-        public EntityBaseRepository(ApplicationDbContext context)
-        {
-            _context = context;
-        }
-
-
-        public void Add(T entity)
-        {
-           _context.Set<T>().Add(entity);
-        }
-
-        public IQueryable<T> AllIncluding(params Expression<Func<T, object>>[] includeProperties)
-        {
-            IQueryable<T> query = _context.Set<T>();
-            query = includeProperties.Aggregate(query, (current, includeProperty) => current.Include(includeProperty));
-            return query.AsQueryable();
-        }
+       
 
         public void Commit()
         {
             _context.SaveChanges();
         }
 
-        public int Count()
+        protected readonly ApplicationDbContext _context;
+
+        public EntityBaseRepository(ApplicationDbContext context)
         {
-            return _context.Set<T>().Count();
+            _context = context;
         }
 
-        public void Delete(T entity)
-        {
-            _context.Set<T>().Remove(entity);
-        }
-
-        public void DeleteWhere(Expression<Func<T, bool>> predicate)
-        {
-            var entities = _context.Set<T>().Where(predicate);
-            foreach (var entity in entities)
-            {
-                _context.Set<T>().Remove(entity);
-            }
-        }
-
-        public IQueryable<T> FindBy(Expression<Func<T, bool>> predicate)
-        {
-            return _context.Set<T>().Where(predicate);
-        }
-
-        public IQueryable<T> GetAll()
-        {
-            return _context.Set<T>().AsQueryable();
-        }
-        int Id;
-        public T GetSingle(int id)
-        {
-            return _context.Set<T>().Find(id)!;
-        }
-
-        public T GetSingle(Expression<Func<T, bool>> predicate)
-        {
-            return _context.Set<T>().FirstOrDefault(predicate)!;
-        }
-
-        public T GetSingle(Expression<Func<T, bool>> predicate, params Expression<Func<T, object>>[] includeProperties)
+        public IEnumerable<T> GetAll(bool withNoTracking = true)
         {
             IQueryable<T> query = _context.Set<T>();
-            query = includeProperties.Aggregate(query, (current, includeProperty) => current.Include(includeProperty));
 
-            return query.Where(predicate).FirstOrDefault()!;
+            if (withNoTracking)
+                query = query.AsNoTracking();
+
+            return query.ToList();
         }
 
-
-        //public void SetStatusActive(T entity)
-        //{
-        //    entity.RecordStatus = RecordStatus.Active;
-        //}
-
-        //public void SetStatusArchived(T entity)
-        //{
-        //    throw new NotImplementedException();
-        //}
-
-        //public void SetStatusDeleted(T entity)
-        //{
-        //    throw new NotImplementedException();
-        //}
-
-        //public void SetStatusPending(T entity)
-        //{
-        //    throw new NotImplementedException();
-        //}
-
-        public void Update(T entity)
+        public IQueryable<T> GetQueryable()
         {
-            _context.Set<T>().Update(entity);
+            return _context.Set<T>();
         }
+
+
+
+        public T? GetById(int id) => _context.Set<T>().Find(id);
+
+        public T? Find(Expression<Func<T, bool>> predicate) =>
+            _context.Set<T>().SingleOrDefault(predicate);
+
+        public T? Find(Expression<Func<T, bool>> predicate, string[]? includes = null)
+        {
+            IQueryable<T> query = _context.Set<T>();
+
+            if (includes is not null)
+                foreach (var include in includes)
+                    query = query.Include(include);
+
+            return query.SingleOrDefault(predicate);
+        }
+
+        public T? Find(Expression<Func<T, bool>> predicate,
+                Func<IQueryable<T>, IIncludableQueryable<T, object>>? include = null)
+        {
+            IQueryable<T> query = _context.Set<T>().AsQueryable();
+
+            if (include is not null)
+                query = include(query);
+
+            return query.SingleOrDefault(predicate);
+        }
+
+        public IEnumerable<T> FindAll(Expression<Func<T, bool>> predicate,
+            Expression<Func<T, object>>? orderBy = null, string? orderByDirection = OrderBy.Ascending)
+        {
+            IQueryable<T> query = _context.Set<T>().Where(predicate);
+
+            if (orderBy is not null)
+            {
+                if (orderByDirection == OrderBy.Ascending)
+                    query = query.OrderBy(orderBy);
+                else
+                    query = query.OrderByDescending(orderBy);
+            }
+
+            return query.ToList();
+        }
+
+        public IEnumerable<T> FindAll(Expression<Func<T, bool>> predicate, int? skip = null, int? take = null,
+            Expression<Func<T, object>>? orderBy = null, string? orderByDirection = OrderBy.Ascending)
+        {
+            IQueryable<T> query = _context.Set<T>().Where(predicate);
+
+            if (orderBy is not null)
+            {
+                if (orderByDirection == OrderBy.Ascending)
+                    query = query.OrderBy(orderBy);
+                else
+                    query = query.OrderByDescending(orderBy);
+            }
+
+            if (skip.HasValue)
+                query = query.Skip(skip.Value);
+
+            if (take.HasValue)
+                query = query.Take(take.Value);
+
+            return query.ToList();
+        }
+
+        public IEnumerable<T> FindAll(Expression<Func<T, bool>> predicate, Func<IQueryable<T>, IIncludableQueryable<T, object>>? include = null,
+            Expression<Func<T, object>>? orderBy = null, string? orderByDirection = OrderBy.Ascending)
+        {
+            IQueryable<T> query = _context.Set<T>().AsQueryable();
+
+            if (include is not null)
+                query = include(query);
+
+            query = query.Where(predicate);
+
+            if (orderBy is not null)
+            {
+                if (orderByDirection == OrderBy.Ascending)
+                    query = query.OrderBy(orderBy);
+                else
+                    query = query.OrderByDescending(orderBy);
+            }
+
+            return query.ToList();
+        }
+
+        public T Add(T entity)
+        {
+            _context.Add(entity);
+            return entity;
+        }
+
+        public IEnumerable<T> AddRange(IEnumerable<T> entities)
+        {
+            _context.AddRange(entities);
+            return entities;
+        }
+
+        public void Update(T entity) => _context.Update(entity);
+
+        //.NET 6
+        public void Remove(T entity) => _context.Remove(entity);
+
+        //.NET 6
+        public void RemoveRange(IEnumerable<T> entities) => _context.RemoveRange(entities);
+
+        //.NET 7
+        public void DeleteBulk(Expression<Func<T, bool>> predicate) =>
+            _context.Set<T>().Where(predicate).ExecuteDelete();
+
+        public bool IsExists(Expression<Func<T, bool>> predicate) =>
+            _context.Set<T>().Any(predicate);
+
+        public int Count() => _context.Set<T>().Count();
+
+        public int Count(Expression<Func<T, bool>> predicate) => _context.Set<T>().Count(predicate);
+
+        public int Max(Expression<Func<T, bool>> predicate, Expression<Func<T, int>> field) =>
+            _context.Set<T>().Any(predicate) ? _context.Set<T>().Where(predicate).Max(field) : 0;
+
     }
 }

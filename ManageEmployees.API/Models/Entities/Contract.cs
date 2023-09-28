@@ -27,7 +27,7 @@ namespace ManageEmployees.API.Models.Entities
 
         public RecordStatus RecordStatus { get; set; }
 
-        public int EmployeeId { get; set; }
+        public int? EmployeeId { get; set; }
         public Employee Employee { get; set; }
     }
 }
