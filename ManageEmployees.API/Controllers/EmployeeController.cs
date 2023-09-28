@@ -17,15 +17,13 @@ namespace ManageEmployees.API.Controllers
         private readonly IEmployeeRepository _employeeRepository;
         private readonly IDepartmentRepository _departmentRepository;
         private readonly IContractRepository _contractRepository;
-        private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
 
-        public EmployeeController(IEmployeeRepository employeeRepository, IDepartmentRepository departmentRepository, IContractRepository contractRepository, ApplicationDbContext context, IMapper mapper)
+        public EmployeeController(IEmployeeRepository employeeRepository, IDepartmentRepository departmentRepository, IContractRepository contractRepository, IMapper mapper)
         {
             _employeeRepository = employeeRepository;
             _departmentRepository = departmentRepository;
             _contractRepository = contractRepository;
-            _context = context;
             _mapper = mapper;
         }
 
@@ -74,36 +72,44 @@ namespace ManageEmployees.API.Controllers
             return Created($"/api/Employee/", employee);
         }
 
+        [HttpPut("{id}")]
+        public IActionResult Put(int id, AddEmployee employeeDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+            var employee = _employeeRepository.GetById(id);
+            if (employee is null)
+            {
+                return NotFound();
+            }
+            employee.FirstName = employeeDto.FirstName;
+            employee.LastName = employeeDto.LastName;
+            employee.BirthDate = employeeDto.BirthDate;
+            employee.JobPosition = employeeDto.JobPosition;
+            employee.RecordStatus = employeeDto.RecordStatus;
 
-        //[HttpPut("{id}")]
-        //public void Put(int id, [FromBody] Employee employee)
-        //{
-        //    try
-        //    {
-        //        var _employee = _employeeRepository.GetSingle(id);
+            _employeeRepository.Update(employee);
+            _employeeRepository.Commit();
 
-        //        if (_employee == null)
-        //            throw new ArgumentNullException(nameof(_employee));
+            return Ok(employee);
+        }
 
-        //        _employee.FirstName = employee.FirstName;
-        //        _employee.LastName = employee.LastName;
-        //        _employee.BirthDate = employee.BirthDate;
-        //        _employee.JobPosition = employee.JobPosition;
-        //        _employee.RecordStatus = employee.RecordStatus;
+        [HttpDelete("{id}")]
+        public IActionResult Delete(int id)
+        {
+            var employee = _employeeRepository.GetById(id);
+            if (employee is null)
+            {
+                return NotFound();
+            }
 
-        //        if (_departmentRepository.GetSingle(employee.DepartmentId) == null)
-        //            throw new ArgumentNullException($"No departments exist with ID you have selected.");
+            _employeeRepository.Remove(employee);
+            _employeeRepository.Commit();
+            return NoContent();
 
-        //        _employee.DepartmentId = employee.DepartmentId;
-        //        _employeeRepository.Commit();
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        throw new Exception(ex.Message);
-        //    }
-        //}
-
-
+        }
         //[HttpDelete("{id}")]
         //public IActionResult Delete(int id)
         //{
