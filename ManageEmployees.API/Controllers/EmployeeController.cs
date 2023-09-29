@@ -110,22 +110,5 @@ namespace ManageEmployees.API.Controllers
             return NoContent();
 
         }
-        //[HttpDelete("{id}")]
-        //public IActionResult Delete(int id)
-        //{
-        //    Employee employee = _employeeRepository.GetSingle(id);
-
-        //    if (employee == null) return NotFound();
-
-        //    var employeeContracts = _contractRepository.FindBy(a => a.EmployeeId == id);
-
-        //    foreach (var contract in employeeContracts)
-        //        _contractRepository.Delete(contract);
-
-        //    _employeeRepository.Delete(employee);
-        //    _employeeRepository.Commit();
-
-        //    return new NoContentResult();
-        //}
     }
 }
