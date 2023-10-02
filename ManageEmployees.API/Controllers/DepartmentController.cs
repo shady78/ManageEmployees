@@ -87,9 +87,7 @@ namespace ManageEmployees.API.Controllers
             {
                 return NotFound();
             }
-            department.Description = departmentDto.Description;
-            department.RecordStatus = departmentDto.RecordStatus;
-            department.Name = departmentDto.Name;
+            department = _mapper.Map(departmentDto, department);
             _departmentRepository.Update(department);
             _departmentRepository.Commit();
             return Ok(department);

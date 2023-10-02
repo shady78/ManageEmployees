@@ -84,11 +84,7 @@ namespace ManageEmployees.API.Controllers
             {
                 return NotFound();
             }
-            employee.FirstName = employeeDto.FirstName;
-            employee.LastName = employeeDto.LastName;
-            employee.BirthDate = employeeDto.BirthDate;
-            employee.JobPosition = employeeDto.JobPosition;
-            employee.RecordStatus = employeeDto.RecordStatus;
+            employee = _mapper.Map(employeeDto, employee);
 
             _employeeRepository.Update(employee);
             _employeeRepository.Commit();
